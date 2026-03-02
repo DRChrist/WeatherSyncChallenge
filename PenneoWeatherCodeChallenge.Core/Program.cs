@@ -3,7 +3,11 @@ using PenneoWeatherCodeChallenge.Core;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
-builder.Services.AddHttpClient<IOpenWeatherClient, OpenWeatherClient>();
+builder.Services.AddHttpClient<IOpenWeatherClient, OpenWeatherClient>(client =>
+{
+    client.BaseAddress = new Uri("https://api.openweathermap.org/");
+    client.Timeout = TimeSpan.FromSeconds(10);
+});
 builder.Services.AddSingleton<MeasurementRepository>();
 builder.Services.AddSingleton<WeatherPollingService>();
 builder.Services.AddHostedService(provider => provider.GetRequiredService<WeatherPollingService>());
