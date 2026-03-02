@@ -1,0 +1,3 @@
+namespace PenneoWeatherCodeChallenge.Core;
+
+public record MeasurementRepositoryConfiguration(string ConnectionString);

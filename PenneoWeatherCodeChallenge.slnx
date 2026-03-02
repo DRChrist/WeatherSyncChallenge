@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="PenneoWeatherCodeChallenge.Core/PenneoWeatherCodeChallenge.Core.csproj" />
+  <Project Path="PenneoWeatherCodeChallenge.Tests/PenneoWeatherCodeChallenge.Tests.csproj" />
+</Solution>
