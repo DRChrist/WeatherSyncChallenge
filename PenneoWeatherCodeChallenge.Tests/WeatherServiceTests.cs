@@ -17,7 +17,8 @@ public class WeatherServiceTests
         fakeMeasurementRepository.InitializeDatabase();
         fakeMeasurementRepository.ClearMeasurements(); // Ensure the database is empty before the test
         var loggerMock = Substitute.For<ILogger<WeatherService>>();
-        var sut = new WeatherService(fakeOpenWeatherClient, fakeMeasurementRepository, loggerMock);
+        var weatherServiceConfig = new WeatherServiceConfiguration { City = "Copenhagen" };
+        var sut = new WeatherService(fakeOpenWeatherClient, fakeMeasurementRepository, weatherServiceConfig, loggerMock);
 
         // Act
         await sut.GetAndSaveWeather(CancellationToken.None);
@@ -32,13 +33,14 @@ public class WeatherServiceTests
     {
         // Arrange
         var openWeatherClientMock = Substitute.For<IOpenWeatherClient>();
-        openWeatherClientMock.GetWeather(Arg.Any<CancellationToken>()).Throws(new Exception("API error"));
+        openWeatherClientMock.GetWeather(Arg.Any<Location>(), Arg.Any<CancellationToken>()).Throws(new Exception("API error"));
         var measurementRepositoryConfig = new MeasurementRepositoryConfiguration("Data Source=GetMeasurement_WeatherServiceThrows_ShouldLogError.db");
         var fakeMeasurementRepository = new MeasurementRepository(measurementRepositoryConfig);
         fakeMeasurementRepository.InitializeDatabase();
         fakeMeasurementRepository.ClearMeasurements(); // Ensure the database is empty before the test
+        var weatherServiceConfig = new WeatherServiceConfiguration { City = "Copenhagen" };
         var loggerMock = Substitute.For<ILogger<WeatherService>>();
-        var sut = new WeatherService(openWeatherClientMock, fakeMeasurementRepository, loggerMock);
+        var sut = new WeatherService(openWeatherClientMock, fakeMeasurementRepository, weatherServiceConfig, loggerMock);
         var cts = new CancellationTokenSource();
 
         // Act
@@ -59,8 +61,9 @@ public class WeatherServiceTests
         var fakeMeasurementRepository = new MeasurementRepository(measurementRepositoryConfig);
         fakeMeasurementRepository.InitializeDatabase();
         fakeMeasurementRepository.ClearMeasurements(); // Ensure the database is empty before the test
+        var weatherServiceConfig = new WeatherServiceConfiguration { City = "Copenhagen" };
         var loggerMock = Substitute.For<ILogger<WeatherService>>();
-        var sut = new WeatherService(fakeOpenWeatherClient, fakeMeasurementRepository, loggerMock);
+        var sut = new WeatherService(fakeOpenWeatherClient, fakeMeasurementRepository, weatherServiceConfig, loggerMock);
         var cts = new CancellationTokenSource();
         cts.Cancel(); // Cancel the token before calling the method to simulate cancellation
 

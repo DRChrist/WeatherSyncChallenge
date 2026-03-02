@@ -9,7 +9,7 @@ public record OpenWeatherResponse(
     [property: JsonPropertyName("dt")] long Dt)
 {
     public TemperatureMeasurement ToMeasurement() => new(
-        Temperature: Main.Temp - 273.15, // Kelvin to Celsius
+        Temperature: Main.Temp - 273.15, // Kelvin to Celsius //TODO: probaly use metric in call instead.
         Location: new Location(Name, Coord.Lat, Coord.Lon),
-        Timestamp: DateTimeOffset.FromUnixTimeSeconds(Dt).UtcDateTime);
+        Timestamp: DateTimeOffset.FromUnixTimeSeconds(Dt).UtcDateTime); // TODO: check that this conversion is correct.
 }

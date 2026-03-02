@@ -3,10 +3,21 @@ using OneOf.Types;
 
 namespace PenneoWeatherCodeChallenge.Core;
 
-public class WeatherService (IOpenWeatherClient openWeatherClient, MeasurementRepository measurementRepository, ILogger<WeatherService> logger)
+public class WeatherService (IOpenWeatherClient openWeatherClient,
+                             MeasurementRepository measurementRepository,
+                             WeatherServiceConfiguration configuration,
+                             ILogger<WeatherService> logger)
 {
+    private Location _location = new(string.Empty, 0, 0); // Default value, will be updated on first fetch
+
     public async Task GetAndSaveWeather(CancellationToken cancellationToken)
     {
+        if (string.IsNullOrEmpty(_location.Name))
+        {
+            var city = configuration.City ?? "Copenhagen";
+            _location = await openWeatherClient.GetLocation(city, cancellationToken);
+        }
+
         var weatherResult = await GetMeasurement(cancellationToken);
         weatherResult.Switch(async
             measurement => await measurementRepository.SaveMeasurement(measurement, cancellationToken),
@@ -18,7 +29,7 @@ public class WeatherService (IOpenWeatherClient openWeatherClient, MeasurementRe
     {
         try
         {
-            return await openWeatherClient.GetWeather(cancellationToken);
+            return await openWeatherClient.GetWeather(_location, cancellationToken);
         }
         catch (Exception)
         {
