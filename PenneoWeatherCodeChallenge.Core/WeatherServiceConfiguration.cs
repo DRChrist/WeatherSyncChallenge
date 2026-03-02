@@ -1,6 +1,6 @@
 namespace PenneoWeatherCodeChallenge.Core;
 
-public record WeatherServiceConfiguration
+public class WeatherServiceConfiguration
 {
-    public string City { get; init; } = string.Empty;
+    public required string City { get; init; }
 }

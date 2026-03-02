@@ -1,3 +1,6 @@
 namespace PenneoWeatherCodeChallenge.Core;
 
-public record MeasurementRepositoryConfiguration(string ConnectionString);
+public class MeasurementRepositoryConfiguration
+{
+    public required string ConnectionString { get; init; }
+}

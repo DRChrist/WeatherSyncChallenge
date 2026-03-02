@@ -13,7 +13,7 @@ public class WeatherServiceTests
     {
         // Arrange
         var fakeOpenWeatherClient = new FakeOpenWeatherClient();
-        var measurementRepositoryConfig = Options.Create<MeasurementRepositoryConfiguration>(new MeasurementRepositoryConfiguration("Data Source=GetMeasurement_HappyPath.db"));
+        var measurementRepositoryConfig = Options.Create<MeasurementRepositoryConfiguration>(new MeasurementRepositoryConfiguration { ConnectionString = "Data Source=GetMeasurement_HappyPath.db" });
         var fakeMeasurementRepository = new MeasurementRepository(measurementRepositoryConfig);
         fakeMeasurementRepository.InitializeDatabase();
         fakeMeasurementRepository.ClearMeasurements(); // Ensure the database is empty before the test
@@ -35,7 +35,7 @@ public class WeatherServiceTests
         // Arrange
         var openWeatherClientMock = Substitute.For<IOpenWeatherClient>();
         openWeatherClientMock.GetWeather(Arg.Any<Location>(), Arg.Any<CancellationToken>()).Throws(new Exception("API error"));
-        var measurementRepositoryConfig = Options.Create<MeasurementRepositoryConfiguration>(new MeasurementRepositoryConfiguration("Data Source=GetMeasurement_WeatherServiceThrows_ShouldLogError.db"));
+        var measurementRepositoryConfig = Options.Create<MeasurementRepositoryConfiguration>(new MeasurementRepositoryConfiguration { ConnectionString = "Data Source=GetMeasurement_WeatherServiceThrows_ShouldLogError.db" });
         var fakeMeasurementRepository = new MeasurementRepository(measurementRepositoryConfig);
         fakeMeasurementRepository.InitializeDatabase();
         fakeMeasurementRepository.ClearMeasurements(); // Ensure the database is empty before the test
@@ -57,7 +57,7 @@ public class WeatherServiceTests
     {
         // Arrange
         var fakeOpenWeatherClient = new FakeOpenWeatherClient();
-        var measurementRepositoryConfig = Options.Create<MeasurementRepositoryConfiguration>(new MeasurementRepositoryConfiguration("Data Source=GetMeasurement_CancellationRequested_ShouldNotSaveMeasurement.db"));
+        var measurementRepositoryConfig = Options.Create<MeasurementRepositoryConfiguration>(new MeasurementRepositoryConfiguration { ConnectionString = "Data Source=GetMeasurement_CancellationRequested_ShouldNotSaveMeasurement.db" });
         var fakeMeasurementRepository = new MeasurementRepository(measurementRepositoryConfig);
         fakeMeasurementRepository.InitializeDatabase();
         fakeMeasurementRepository.ClearMeasurements(); // Ensure the database is empty before the test
@@ -83,7 +83,7 @@ public class WeatherServiceTests
         var expectedLocation = new Location("London", 51.5156, -0.0919);
         openWeatherClientMock.GetLocation(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(expectedLocation);
         openWeatherClientMock.GetWeather(Arg.Any<Location>(), Arg.Any<CancellationToken>()).Returns(new TemperatureMeasurement(20.0, expectedLocation, DateTime.UtcNow));
-        var measurementRepositoryConfig = Options.Create<MeasurementRepositoryConfiguration>(new MeasurementRepositoryConfiguration("Data Source=GetMeasurement_FirstCall_ShouldFetchLocation.db"));
+        var measurementRepositoryConfig = Options.Create<MeasurementRepositoryConfiguration>(new MeasurementRepositoryConfiguration { ConnectionString = "Data Source=GetMeasurement_FirstCall_ShouldFetchLocation.db" });
         var fakeMeasurementRepository = new MeasurementRepository(measurementRepositoryConfig);
         fakeMeasurementRepository.InitializeDatabase();
         fakeMeasurementRepository.ClearMeasurements(); // Ensure the database is empty before the test

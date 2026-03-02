@@ -9,7 +9,7 @@ public class MeasurementRepositoryTests
     public async Task SaveMeasurement_ShouldSaveMeasurement()
     {
         // Arrange
-        var configuration = Options.Create<MeasurementRepositoryConfiguration>(new MeasurementRepositoryConfiguration("Data Source=measurements.db"));
+        var configuration = Options.Create<MeasurementRepositoryConfiguration>(new MeasurementRepositoryConfiguration { ConnectionString ="Data Source=measurements.db" });
         var sut = new MeasurementRepository(configuration);
         sut.InitializeDatabase();
         sut.ClearMeasurements();

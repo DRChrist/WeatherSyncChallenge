@@ -1,3 +1,6 @@
 namespace PenneoWeatherCodeChallenge.Core;
 
-public record OpenWeatherClientConfiguration(string ApiKey);
+public class OpenWeatherClientConfiguration
+{
+    public required string ApiKey { get; init; }
+}
