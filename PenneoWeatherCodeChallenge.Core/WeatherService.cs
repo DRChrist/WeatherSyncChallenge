@@ -1,24 +1,30 @@
-using System.Runtime.Serialization;
+using OneOf;
+using OneOf.Types;
 
 namespace PenneoWeatherCodeChallenge.Core;
 
-public class WeatherService (HttpClient httpClient, WeatherServiceConfiguration config, ILogger<WeatherService> logger) : IWeatherService
+public class WeatherService (IOpenWeatherClient openWeatherClient, MeasurementRepository measurementRepository, ILogger<WeatherService> logger)
 {
-    // public async Task<TemperatureMeasurement> GetWeather(Location location, CancellationToken cancellationToken) //TODO: Implement location-based API call
-    public async Task<TemperatureMeasurement> GetWeather(CancellationToken cancellationToken) //TODO: Implement location-based API call
+    public async Task GetAndSaveWeather(CancellationToken cancellationToken)
     {
-        var response = await httpClient.GetAsync($"https://api.openweathermap.com/data/2.5/weather?lat=44.34&lon=10.99&appid={config.ApiKey}");
-        response.EnsureSuccessStatusCode();
-
-        logger.LogInformation("Successfully retrieved weather data. StatusCode: {StatusCode}", response.StatusCode);
-
-        var openWeatherResponse = await response.Content.ReadFromJsonAsync<OpenWeatherResponse>();
-        if (openWeatherResponse == null)
-        {
-            throw new SerializationException("Failed to deserialize weather data from API response.");
-        }
-        var temperatureMeasurement = openWeatherResponse.ToMeasurement();
-
-        return temperatureMeasurement;
+        var weatherResult = await GetMeasurement(cancellationToken);
+        weatherResult.Switch(async
+            measurement => await measurementRepository.SaveMeasurement(measurement, cancellationToken),
+            none => logger.LogError("Failed to fetch weather data")
+        );
     }
+
+    private async Task<OneOf<TemperatureMeasurement, None>> GetMeasurement(CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await openWeatherClient.GetWeather(cancellationToken);
+        }
+        catch (Exception)
+        {
+            // Don't rethrow the exception, keep the service running and log the error instead
+            return new None();
+        }
+    }
+    
 }

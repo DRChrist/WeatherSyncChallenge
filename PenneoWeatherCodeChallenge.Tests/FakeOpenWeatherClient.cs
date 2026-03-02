@@ -2,7 +2,7 @@ using PenneoWeatherCodeChallenge.Core;
 
 namespace PenneoWeatherCodeChallenge.Tests;
 
-public class FakeWeatherService : IWeatherService
+public class FakeOpenWeatherClient : IOpenWeatherClient
 {
     public Task<TemperatureMeasurement> GetWeather(CancellationToken cancellationToken)
     {
