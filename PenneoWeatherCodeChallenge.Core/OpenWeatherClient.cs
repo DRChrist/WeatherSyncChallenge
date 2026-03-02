@@ -19,16 +19,13 @@ public class OpenWeatherClient(HttpClient httpClient, IOptions<OpenWeatherClient
 
     public async Task<Location> GetLocation(string locationName, CancellationToken cancellationToken)
     {
-        var response = await httpClient.GetAsync($"/geo/1.0/direct?q={locationName}&limit=1&appid={configuration.Value.ApiKey}", cancellationToken);
+        var response = await httpClient.GetAsync($"/geo/1.0/direct?q={Uri.EscapeDataString(locationName)}&limit=1&appid={configuration.Value.ApiKey}", cancellationToken);
         response.EnsureSuccessStatusCode();
 
-        var locations = await response.Content.ReadFromJsonAsync<List<Location>>(cancellationToken: cancellationToken) 
+        var locations = await response.Content.ReadFromJsonAsync<List<Location>>(cancellationToken: cancellationToken)
             ?? throw new SerializationException("Geocoding API returned null.");
 
-        if (locations.Count == 0)
-        {
-            throw new InvalidOperationException($"No location found for name: {locationName}");
-        }
+        if (locations.Count == 0) throw new InvalidOperationException($"No location found for name: {locationName}");
 
         return locations[0];
     }

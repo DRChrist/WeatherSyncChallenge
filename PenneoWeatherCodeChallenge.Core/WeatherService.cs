@@ -14,15 +14,12 @@ public class WeatherService (IOpenWeatherClient openWeatherClient,
     public async Task GetAndSaveWeather(CancellationToken cancellationToken)
     {
         if (string.IsNullOrEmpty(_location.Name))
-        {
-            var city = configuration.Value.City ?? "Copenhagen";
-            _location = await openWeatherClient.GetLocation(city, cancellationToken);
-        }
+            _location = await openWeatherClient.GetLocation(configuration.Value.City, cancellationToken);
 
         var weatherResult = await GetMeasurement(cancellationToken);
-        weatherResult.Switch(async
-            measurement => await measurementRepository.SaveMeasurement(measurement, cancellationToken),
-            none => logger.LogError("Failed to fetch weather data")
+        await weatherResult.Match(
+            async measurement => await measurementRepository.Add(measurement, cancellationToken),
+            none => { logger.LogError("Failed to fetch weather data"); return Task.CompletedTask; }
         );
     }
 
@@ -32,7 +29,7 @@ public class WeatherService (IOpenWeatherClient openWeatherClient,
         {
             return await openWeatherClient.GetWeather(_location, cancellationToken);
         }
-        catch (Exception)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             // Don't rethrow the exception, keep the service running and log the error instead
             return new None();

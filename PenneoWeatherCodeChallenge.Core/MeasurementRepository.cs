@@ -5,7 +5,7 @@ namespace PenneoWeatherCodeChallenge.Core;
 
 public class MeasurementRepository(IOptions<MeasurementRepositoryConfiguration> configuration)
 {
-    public async Task SaveMeasurement(TemperatureMeasurement measurement, CancellationToken cancellationToken)
+    public async Task Add(TemperatureMeasurement measurement, CancellationToken cancellationToken)
     {
         using var connection = new SqliteConnection(configuration.Value.ConnectionString);
         await connection.OpenAsync(cancellationToken);
@@ -17,13 +17,13 @@ public class MeasurementRepository(IOptions<MeasurementRepositoryConfiguration> 
             VALUES ($temperature, $location, $timestamp)
         ";
         command.Parameters.AddWithValue("$temperature", measurement.Temperature);
-        command.Parameters.AddWithValue("$location", measurement.Location.Name);
+        command.Parameters.AddWithValue("$location", measurement.City);
         command.Parameters.AddWithValue("$timestamp", measurement.Timestamp);
 
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
-    public async Task<List<TemperatureMeasurement>> GetAllMeasurements(CancellationToken cancellationToken)
+    public async Task<List<TemperatureMeasurement>> GetAll(CancellationToken cancellationToken, int limit = 100)
     {
         using var connection = new SqliteConnection(configuration.Value.ConnectionString);
         await connection.OpenAsync(cancellationToken);
@@ -33,7 +33,10 @@ public class MeasurementRepository(IOptions<MeasurementRepositoryConfiguration> 
         @"
             SELECT Temperature, Location, Timestamp
             FROM TemperatureMeasurements
+            ORDER BY Timestamp DESC
+            LIMIT $limit
         ";
+        command.Parameters.AddWithValue("$limit", limit);
 
         var measurements = new List<TemperatureMeasurement>();
         using var reader = await command.ExecuteReaderAsync(cancellationToken);
@@ -41,7 +44,7 @@ public class MeasurementRepository(IOptions<MeasurementRepositoryConfiguration> 
         {
             measurements.Add(new TemperatureMeasurement(
                 reader.GetDouble(0),
-                new Location(reader.GetString(1), 0, 0), // TODO: Location details are not stored in the database, so we use a placeholder
+                reader.GetString(1),
                 reader.GetDateTime(2)
             ));
         }
@@ -49,7 +52,7 @@ public class MeasurementRepository(IOptions<MeasurementRepositoryConfiguration> 
         return measurements;
     }
 
-    public async Task<List<TemperatureMeasurement>> GetMeasurements(DateTime from, DateTime to, CancellationToken cancellationToken)
+    public async Task<List<TemperatureMeasurement>> GetHistory(DateTime from, DateTime to, CancellationToken cancellationToken)
     {
         using var connection = new SqliteConnection(configuration.Value.ConnectionString);
         await connection.OpenAsync(cancellationToken);
@@ -70,7 +73,7 @@ public class MeasurementRepository(IOptions<MeasurementRepositoryConfiguration> 
         {
             measurements.Add(new TemperatureMeasurement(
                 reader.GetDouble(0),
-                new Location(reader.GetString(1), 0, 0), // TODO: Location details are not stored in the database, so we use a placeholder
+                reader.GetString(1),
                 reader.GetDateTime(2)
             ));
         }
@@ -92,19 +95,6 @@ public class MeasurementRepository(IOptions<MeasurementRepositoryConfiguration> 
                 Location TEXT NOT NULL,
                 Timestamp TEXT NOT NULL
             )
-        ";
-        command.ExecuteNonQuery();
-    }
-
-    public void ClearMeasurements()
-    {
-        using var connection = new SqliteConnection(configuration.Value.ConnectionString);
-        connection.Open();
-
-        var command = connection.CreateCommand();
-        command.CommandText =
-        @"
-            DELETE FROM TemperatureMeasurements
         ";
         command.ExecuteNonQuery();
     }

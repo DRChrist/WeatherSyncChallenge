@@ -9,7 +9,7 @@ public class FakeOpenWeatherClient : IOpenWeatherClient
         return Task.FromResult(new TemperatureMeasurement
         (
             20.0,
-            location,
+            location.Name,
             DateTime.UtcNow
         ));
     }

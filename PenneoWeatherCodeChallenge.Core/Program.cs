@@ -35,18 +35,18 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.MapGet("/measurements", async (MeasurementRepository repo, CancellationToken ct,
-    DateTime? from, DateTime? to) =>
+    DateTime? from, DateTime? to, int limit = 100) =>
 {
     var measurements = (from, to) switch
     {
-        ({ } f, { } t) => await repo.GetMeasurements(f, t, ct),
-        _ => await repo.GetAllMeasurements(ct)
+        ({ } f, { } t) => await repo.GetHistory(f, t, ct),
+        _ => await repo.GetAll(ct, limit)
     };
 
     return Results.Ok(measurements.Select(m => new
     {
         m.Temperature,
-        Location = m.Location.Name,
+        m.City,
         m.Timestamp
     }));
 })

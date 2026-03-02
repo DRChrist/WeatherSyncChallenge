@@ -1,5 +1,5 @@
 namespace PenneoWeatherCodeChallenge.Core;
 
 public record TemperatureMeasurement(double Temperature, // In Celsius
-                                     Location Location,
+                                     string City,
                                      DateTime Timestamp);

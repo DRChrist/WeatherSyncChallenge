@@ -1,3 +1,4 @@
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
 using PenneoWeatherCodeChallenge.Core;
 
@@ -9,17 +10,20 @@ public class MeasurementRepositoryTests
     public async Task SaveMeasurement_ShouldSaveMeasurement()
     {
         // Arrange
-        var configuration = Options.Create<MeasurementRepositoryConfiguration>(new MeasurementRepositoryConfiguration { ConnectionString ="Data Source=measurements.db" });
+        var connectionString = $"Data Source={Guid.NewGuid()};Mode=Memory;Cache=Shared";
+        using var anchor = new SqliteConnection(connectionString);
+        await anchor.OpenAsync();
+
+        var configuration = Options.Create(new MeasurementRepositoryConfiguration { ConnectionString = connectionString });
         var sut = new MeasurementRepository(configuration);
         sut.InitializeDatabase();
-        sut.ClearMeasurements();
-        var measurement = new TemperatureMeasurement(25.0, new Location("TestCity", 10.0, 20.0), DateTime.UtcNow);
+        var measurement = new TemperatureMeasurement(25.0, "TestCity", DateTime.UtcNow);
 
         // Act
-        await sut.SaveMeasurement(measurement, CancellationToken.None);
+        await sut.Add(measurement, CancellationToken.None);
 
         // Assert
-        var result = await sut.GetAllMeasurements(CancellationToken.None);
+        var result = await sut.GetAll(CancellationToken.None);
         Assert.Single(result);
         Assert.Equal(measurement.Temperature, result[0].Temperature);
     }

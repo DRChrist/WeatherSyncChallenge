@@ -10,6 +10,6 @@ public record OpenWeatherResponse(
 {
     public TemperatureMeasurement ToMeasurement() => new(
         Temperature: Main.Temp,
-        Location: new Location(Name, Coord.Lat, Coord.Lon),
-        Timestamp: DateTimeOffset.FromUnixTimeSeconds(Dt).UtcDateTime); // TODO: check that this conversion is correct.
+        City: Name,
+        Timestamp: DateTimeOffset.FromUnixTimeSeconds(Dt).UtcDateTime);
 }
