@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Options;
 using PenneoWeatherCodeChallenge.Core;
 
 namespace PenneoWeatherCodeChallenge.Tests;
@@ -8,9 +9,10 @@ public class MeasurementRepositoryTests
     public async Task SaveMeasurement_ShouldSaveMeasurement()
     {
         // Arrange
-        var configuration = new MeasurementRepositoryConfiguration("Data Source=measurements.db");
+        var configuration = Options.Create<MeasurementRepositoryConfiguration>(new MeasurementRepositoryConfiguration("Data Source=measurements.db"));
         var sut = new MeasurementRepository(configuration);
         sut.InitializeDatabase();
+        sut.ClearMeasurements();
         var measurement = new TemperatureMeasurement(25.0, new Location("TestCity", 10.0, 20.0), DateTime.UtcNow);
 
         // Act

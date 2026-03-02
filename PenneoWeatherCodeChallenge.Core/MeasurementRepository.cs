@@ -1,12 +1,13 @@
 using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Options;
 
 namespace PenneoWeatherCodeChallenge.Core;
 
-public class MeasurementRepository(MeasurementRepositoryConfiguration configuration)
+public class MeasurementRepository(IOptions<MeasurementRepositoryConfiguration> configuration)
 {
     public async Task SaveMeasurement(TemperatureMeasurement measurement, CancellationToken cancellationToken)
     {
-        using var connection = new SqliteConnection(configuration.ConnectionString);
+        using var connection = new SqliteConnection(configuration.Value.ConnectionString);
         await connection.OpenAsync(cancellationToken);
 
         var command = connection.CreateCommand();
@@ -24,7 +25,7 @@ public class MeasurementRepository(MeasurementRepositoryConfiguration configurat
 
     public async Task<List<TemperatureMeasurement>> GetAllMeasurements(CancellationToken cancellationToken)
     {
-        using var connection = new SqliteConnection(configuration.ConnectionString);
+        using var connection = new SqliteConnection(configuration.Value.ConnectionString);
         await connection.OpenAsync(cancellationToken);
 
         var command = connection.CreateCommand();
@@ -50,7 +51,7 @@ public class MeasurementRepository(MeasurementRepositoryConfiguration configurat
 
     public async Task<List<TemperatureMeasurement>> GetMeasurements(DateTime from, DateTime to, CancellationToken cancellationToken)
     {
-        using var connection = new SqliteConnection(configuration.ConnectionString);
+        using var connection = new SqliteConnection(configuration.Value.ConnectionString);
         await connection.OpenAsync(cancellationToken);
 
         var command = connection.CreateCommand();
@@ -79,7 +80,7 @@ public class MeasurementRepository(MeasurementRepositoryConfiguration configurat
 
     public void InitializeDatabase()
     {
-        using var connection = new SqliteConnection(configuration.ConnectionString);
+        using var connection = new SqliteConnection(configuration.Value.ConnectionString);
         connection.Open();
 
         var command = connection.CreateCommand();
@@ -97,7 +98,7 @@ public class MeasurementRepository(MeasurementRepositoryConfiguration configurat
 
     public void ClearMeasurements()
     {
-        using var connection = new SqliteConnection(configuration.ConnectionString);
+        using var connection = new SqliteConnection(configuration.Value.ConnectionString);
         connection.Open();
 
         var command = connection.CreateCommand();

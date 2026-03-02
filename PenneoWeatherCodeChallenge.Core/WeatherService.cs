@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Options;
 using OneOf;
 using OneOf.Types;
 
@@ -5,7 +6,7 @@ namespace PenneoWeatherCodeChallenge.Core;
 
 public class WeatherService (IOpenWeatherClient openWeatherClient,
                              MeasurementRepository measurementRepository,
-                             WeatherServiceConfiguration configuration,
+                             IOptions<WeatherServiceConfiguration> configuration,
                              ILogger<WeatherService> logger)
 {
     private Location _location = new(string.Empty, 0, 0); // Default value, will be updated on first fetch
@@ -14,7 +15,7 @@ public class WeatherService (IOpenWeatherClient openWeatherClient,
     {
         if (string.IsNullOrEmpty(_location.Name))
         {
-            var city = configuration.City ?? "Copenhagen";
+            var city = configuration.Value.City ?? "Copenhagen";
             _location = await openWeatherClient.GetLocation(city, cancellationToken);
         }
 

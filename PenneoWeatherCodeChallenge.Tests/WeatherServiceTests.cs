@@ -2,6 +2,7 @@
 using NSubstitute;
 using Microsoft.Extensions.Logging;
 using NSubstitute.ExceptionExtensions;
+using Microsoft.Extensions.Options;
 
 namespace PenneoWeatherCodeChallenge.Tests;
 
@@ -12,12 +13,12 @@ public class WeatherServiceTests
     {
         // Arrange
         var fakeOpenWeatherClient = new FakeOpenWeatherClient();
-        var measurementRepositoryConfig = new MeasurementRepositoryConfiguration("Data Source=GetMeasurement_HappyPath.db");
+        var measurementRepositoryConfig = Options.Create<MeasurementRepositoryConfiguration>(new MeasurementRepositoryConfiguration("Data Source=GetMeasurement_HappyPath.db"));
         var fakeMeasurementRepository = new MeasurementRepository(measurementRepositoryConfig);
         fakeMeasurementRepository.InitializeDatabase();
         fakeMeasurementRepository.ClearMeasurements(); // Ensure the database is empty before the test
         var loggerMock = Substitute.For<ILogger<WeatherService>>();
-        var weatherServiceConfig = new WeatherServiceConfiguration { City = "Copenhagen" };
+        var weatherServiceConfig = Options.Create<WeatherServiceConfiguration>(new WeatherServiceConfiguration { City = "Copenhagen" });
         var sut = new WeatherService(fakeOpenWeatherClient, fakeMeasurementRepository, weatherServiceConfig, loggerMock);
 
         // Act
@@ -34,17 +35,16 @@ public class WeatherServiceTests
         // Arrange
         var openWeatherClientMock = Substitute.For<IOpenWeatherClient>();
         openWeatherClientMock.GetWeather(Arg.Any<Location>(), Arg.Any<CancellationToken>()).Throws(new Exception("API error"));
-        var measurementRepositoryConfig = new MeasurementRepositoryConfiguration("Data Source=GetMeasurement_WeatherServiceThrows_ShouldLogError.db");
+        var measurementRepositoryConfig = Options.Create<MeasurementRepositoryConfiguration>(new MeasurementRepositoryConfiguration("Data Source=GetMeasurement_WeatherServiceThrows_ShouldLogError.db"));
         var fakeMeasurementRepository = new MeasurementRepository(measurementRepositoryConfig);
         fakeMeasurementRepository.InitializeDatabase();
         fakeMeasurementRepository.ClearMeasurements(); // Ensure the database is empty before the test
-        var weatherServiceConfig = new WeatherServiceConfiguration { City = "Copenhagen" };
+        var weatherServiceConfig = Options.Create<WeatherServiceConfiguration>(new WeatherServiceConfiguration { City = "Copenhagen" });
         var loggerMock = Substitute.For<ILogger<WeatherService>>();
         var sut = new WeatherService(openWeatherClientMock, fakeMeasurementRepository, weatherServiceConfig, loggerMock);
-        var cts = new CancellationTokenSource();
 
         // Act
-        await sut.GetAndSaveWeather(cts.Token);
+        await sut.GetAndSaveWeather(CancellationToken.None);
 
         // Assert
         loggerMock.Received().LogError("Failed to fetch weather data");
@@ -57,11 +57,11 @@ public class WeatherServiceTests
     {
         // Arrange
         var fakeOpenWeatherClient = new FakeOpenWeatherClient();
-        var measurementRepositoryConfig = new MeasurementRepositoryConfiguration("Data Source=GetMeasurement_CancellationRequested_ShouldNotSaveMeasurement.db");
+        var measurementRepositoryConfig = Options.Create<MeasurementRepositoryConfiguration>(new MeasurementRepositoryConfiguration("Data Source=GetMeasurement_CancellationRequested_ShouldNotSaveMeasurement.db"));
         var fakeMeasurementRepository = new MeasurementRepository(measurementRepositoryConfig);
         fakeMeasurementRepository.InitializeDatabase();
         fakeMeasurementRepository.ClearMeasurements(); // Ensure the database is empty before the test
-        var weatherServiceConfig = new WeatherServiceConfiguration { City = "Copenhagen" };
+        var weatherServiceConfig = Options.Create<WeatherServiceConfiguration>(new WeatherServiceConfiguration { City = "Copenhagen" });
         var loggerMock = Substitute.For<ILogger<WeatherService>>();
         var sut = new WeatherService(fakeOpenWeatherClient, fakeMeasurementRepository, weatherServiceConfig, loggerMock);
         var cts = new CancellationTokenSource();
@@ -73,5 +73,30 @@ public class WeatherServiceTests
         // Assert
         var measurements = await fakeMeasurementRepository.GetAllMeasurements(CancellationToken.None);
         Assert.Empty(measurements); // No measurements should be saved when cancellation is requested
+    }
+
+    [Fact]
+    public async Task GetMeasurement_FirstCall_ShouldFetchLocation()
+    {
+        // Arrange
+        var openWeatherClientMock = Substitute.For<IOpenWeatherClient>();
+        var expectedLocation = new Location("London", 51.5156, -0.0919);
+        openWeatherClientMock.GetLocation(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(expectedLocation);
+        openWeatherClientMock.GetWeather(Arg.Any<Location>(), Arg.Any<CancellationToken>()).Returns(new TemperatureMeasurement(20.0, expectedLocation, DateTime.UtcNow));
+        var measurementRepositoryConfig = Options.Create<MeasurementRepositoryConfiguration>(new MeasurementRepositoryConfiguration("Data Source=GetMeasurement_FirstCall_ShouldFetchLocation.db"));
+        var fakeMeasurementRepository = new MeasurementRepository(measurementRepositoryConfig);
+        fakeMeasurementRepository.InitializeDatabase();
+        fakeMeasurementRepository.ClearMeasurements(); // Ensure the database is empty before the test
+        var weatherServiceConfig = Options.Create<WeatherServiceConfiguration>(new WeatherServiceConfiguration { City = "London" });
+        var loggerMock = Substitute.For<ILogger<WeatherService>>();
+        var sut = new WeatherService(openWeatherClientMock, fakeMeasurementRepository, weatherServiceConfig, loggerMock);
+
+        // Act
+        await sut.GetAndSaveWeather(CancellationToken.None);
+
+        // Assert
+        var measurements = await fakeMeasurementRepository.GetAllMeasurements(CancellationToken.None);
+        Assert.NotEmpty(measurements);
+        Assert.Equal(expectedLocation.Name, measurements[0].Location.Name);
     }
 }
